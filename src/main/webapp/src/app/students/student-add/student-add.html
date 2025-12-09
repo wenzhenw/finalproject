@@ -1,0 +1,15 @@
+<div class="submit-form">
+    <div class="form-group">
+        Name:
+        <input class="form-control" id="name" type="text" name="name" [(ngModel)]="student.name">
+        Age:
+        <input class="form-control" id="age" type="number" name="age" [(ngModel)]="student.age">
+        Student Number:
+        <input class="form-control" id="snum" type="number" name="snum" [(ngModel)]="student.snum">
+        Campus:
+        <input class="form-control" id="campus" type="text" name="campus" [(ngModel)]="student.campus">
+        Year of Study:
+        <input class="form-control" id="year" type="number" name="year" [(ngModel)]="student.studyyear">
+        <button class="btn btn-success" (click)="saveStudent()">Submit</button>
+    </div>
+</div>
