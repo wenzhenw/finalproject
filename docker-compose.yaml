@@ -1,0 +1,123 @@
+# ============================================
+# Docker Compose Template
+# Multi-Environment Deployment Configuration
+# ============================================
+# 
+# INSTRUCTIONS:
+# 1. Copy this file to your project root as "docker-compose.yml"
+# 2. Update all TODO comments for your application
+# 3. Adjust ports if they conflict with other services
+#
+# USAGE:
+#   Start staging:    docker compose up staging -d
+#   Start production: docker compose up production -d
+#   Start both:       docker compose up -d
+#   Stop all:         docker compose down
+#   View logs:        docker compose logs -f [staging|production]
+#   Rebuild:          docker compose build --no-cache
+#
+# ============================================
+
+
+services:
+  # ==========================================
+  # STAGING ENVIRONMENT
+  # ==========================================
+  # Purpose: Testing new features before production
+  # URL: http://localhost:5000
+  # ==========================================
+  staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${final:-myapp}-staging
+    ports:
+      # TODO: Update the internal port (right side) to match your app
+      # Format: "external:internal"
+      - "5000:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging           # TODO: Change variable name if not Node.js
+      - PORT=8080                  # TODO: Update to your app's port
+      - APP_NAME="${final:-MyApp} (STAGING)"
+      # TODO: Add any other environment variables your app needs
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/ajf
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=1234
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      # TODO: Update the health check URL and port
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - app-network
+
+
+  # ==========================================
+  # PRODUCTION ENVIRONMENT
+  # ==========================================
+  # Purpose: Stable release for end users
+  # URL: http://localhost:6000
+  # ==========================================
+  production:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${final:-myapp}-production
+    ports:
+      # TODO: Update the internal port (right side) to match your app
+      - "7000:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=production        # TODO: Change variable name if not Node.js
+      - PORT=8080                  # TODO: Update to your app's port
+      - APP_NAME="${final:-MyApp} (PRODUCTION)"
+      # TODO: Add any other environment variables your app needs
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/ajf
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=1234
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      # TODO: Update the health check URL and port
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  database:
+    image: postgres:15-alpine    # or mysql:8, mongo:6, etc.
+    container_name: ${final:-myapp}-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=ajf
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app-network
+volumes:
+  db-data:
+
+# ==========================================
+# NETWORKS
+# ==========================================
+networks:
+  app-network:
+    driver: bridge
